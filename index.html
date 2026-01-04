@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>English ↔ Arabic Vocab</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --good: #16a34a;
+    --bad: #dc2626;
+    --skip: #f59e0b;
+    --shadow: 0 10px 30px rgba(0,0,0,.08);
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    gap: 10px;
+    margin: 6px 0 14px;
+  }
+  .title {
+    font-weight: 800;
+    letter-spacing: .2px;
+    font-size: 18px;
+  }
+  .pill {
+    font-size: 12px;
+    color: var(--muted);
+    background: rgba(17,24,39,.06);
+    padding: 8px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+  .grid2 {
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 720px) {
+    .grid2 { grid-template-columns: 1fr 1fr; }
+  }
+  button {
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 12px;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+    color: var(--text);
+  }
+  button:active { transform: translateY(1px); }
+  .primary {
+    background: #111111;
+    color: #fff;
+    border-color: #111111;
+  }
+  .secondary { background: #fff; }
+  .btnrow { display:flex; gap: 10px; flex-wrap:wrap; }
+  .btnrow button { flex: 1 1 160px; text-align:center; }
+  .small { font-size: 12px; color: var(--muted); }
+  .bigword {
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1.1;
+    word-break: break-word;
+  }
+  .hint { color: var(--muted); margin-top: 6px; line-height: 1.35; }
+  .row { display:flex; align-items:flex-start; gap: 10px; flex-wrap: wrap; }
+  .speak { flex: 0 0 auto; border-radius: 12px; padding: 8px 10px; font-size: 14px; }
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+  .meter { height: 10px; background: rgba(17,24,39,.08); border-radius: 999px; overflow: hidden; }
+  .meter > div { height: 100%; width: 0%; background: #111111; }
+
+  .triMeters { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .mini { height: 10px; border-radius: 999px; background: rgba(17,24,39,.08); overflow:hidden; }
+  .mini > div { height:100%; width:0%; }
+  .mini.good > div { background: var(--good); }
+  .mini.bad > div { background: var(--bad); }
+  .mini.skip > div { background: var(--skip); }
+
+  .counters { display:flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+  .counter { font-size: 12px; color: var(--muted); background: rgba(17,24,39,.06); padding: 8px 10px; border-radius: 999px; }
+
+  .feedback { margin-top: 10px; font-weight: 700; min-height: 20px; }
+  .ok { color: var(--good); }
+  .no { color: var(--bad); }
+
+  .example {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(17,24,39,.04);
+    border: 1px solid rgba(17,24,39,.06);
+  }
+  .example .en { font-weight: 700; line-height: 1.35; display:flex; gap: 10px; align-items:flex-start; flex-wrap:wrap; }
+  .example .ar { margin-top: 6px; direction: rtl; text-align: right; line-height: 1.5; color: #111827; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    background: #111111;
+    color: #fff;
+    padding: 12px 14px;
+    border-radius: 999px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.22);
+    display:none;
+    max-width: min(520px, calc(100% - 24px));
+    text-align:center;
+    z-index: 999;
+  }
+
+  /* Review */
+  .reviewHeader { display:flex; align-items:flex-end; justify-content:space-between; gap: 10px; flex-wrap: wrap; }
+  .reviewHeader h2 { margin: 0; font-size: 18px; }
+  .search { width: 100%; margin-top: 10px; }
+  .search input { width: 100%; padding: 12px 12px; border-radius: 14px; border: 1px solid var(--border); font-size: 15px; }
+  .cat { margin-top: 14px; }
+  .catTitle { font-weight: 900; margin: 0 0 8px; }
+  table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 14px; border: 1px solid var(--border); background: #fff; }
+  th, td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { text-align:left; font-size: 12px; color: var(--muted); background: rgba(17,24,39,.03); }
+  td.ar { direction: rtl; text-align: right; font-weight: 600; }
+  td.en { font-weight: 700; word-break: break-word; }
+  tr:last-child td { border-bottom: 0; }
+
+  /* Views */
+  .view { display:none; }
+  .view.active { display:block; }
+
+  .homeHero { padding: 18px; }
+  .homeHero h1 { margin: 0; font-size: 22px; letter-spacing: .2px; }
+  .homeHero p { margin: 8px 0 0; color: var(--muted); line-height: 1.4; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title" id="appTitle">English ↔ Arabic Vocab</div>
+      <div class="pill" id="pillInfo">258 words • Offline-ready</div>
+    </div>
+
+    <!-- HOME -->
+    <section id="viewHome" class="view active">
+      <div class="card homeHero">
+        <h1>Choose a mode</h1>
+        <p>اختر وضع الاستخدام: مراجعة الكلمات أو اختبار (Quiz) مع التكرار والمستويات.</p>
+        <div class="divider"></div>
+        <div class="btnrow">
+          <button class="primary" id="btnGoQuiz">Quiz اختبار</button>
+          <button class="secondary" id="btnGoReview">Review مراجعة</button>
+        </div>
+        <div class="divider"></div>
+        <div class="small">
+          Tip: On phones, use Chrome/Safari and “Add to Home Screen” for the best app-like experience.
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="viewQuiz" class="view">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;">
+          <button id="btnBackHomeFromQuiz" class="secondary" style="padding:10px 12px;">← Home</button>
+          <div class="pill" id="modePill">Quiz</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row" style="align-items:center; justify-content:space-between;">
+          <div>
+            <div class="bigword" id="wordEn">...</div>
+            <div class="hint" id="hintText">...</div>
+          </div>
+          <button class="speak" id="btnSpeakWord" title="Speak">🔊</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="grid2" id="choices"></div>
+
+        <div class="divider"></div>
+
+        <div class="btnrow">
+          <button id="btnSkip" class="secondary">Skip تخطي</button>
+          <button id="btnNext" class="primary">Next التالي</button>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="example" id="exampleBox" style="display:none;">
+          <div class="en">
+            <span id="exampleEn"></span>
+            <button class="speak" id="btnSpeakExample" title="Speak sentence">🔊</button>
+          </div>
+          <div class="ar" id="exampleAr"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="meter" aria-label="Progress"><div id="progressBar"></div></div>
+
+        <div class="triMeters">
+          <div>
+            <div class="small">Correct</div>
+            <div class="mini good"><div id="barGood"></div></div>
+          </div>
+          <div>
+            <div class="small">Wrong</div>
+            <div class="mini bad"><div id="barBad"></div></div>
+          </div>
+          <div>
+            <div class="small">Skipped</div>
+            <div class="mini skip"><div id="barSkip"></div></div>
+          </div>
+        </div>
+
+        <div class="counters">
+          <div class="counter" id="countCorrect">✅ Correct: 0</div>
+          <div class="counter" id="countWrong">❌ Wrong: 0</div>
+          <div class="counter" id="countSkipped">⏭️ Skipped: 0</div>
+          <div class="counter" id="countStreak">🔥 Streak: 0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section id="viewReview" class="view">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;">
+          <button id="btnBackHomeFromReview" class="secondary" style="padding:10px 12px;">← Home</button>
+          <div class="pill">Review</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="reviewHeader">
+          <h2>All Vocabulary (258)</h2>
+          <div class="pill" id="reviewCountPill">Showing 258</div>
+        </div>
+
+        <div class="search">
+          <input id="reviewSearch" placeholder="Search in English or Arabic... (ابحث بالإنجليزية أو العربية)">
+        </div>
+
+        <div class="divider"></div>
+
+        <div id="reviewContainer"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const VOCAB = [{"en": "break", "ar": "استراحة", "category": "Main Job", "hint": "Short time to rest.", "exEn": "You can take your break now.", "exAr": "يمكنك أخذ استراحتك الآن."}, {"en": "shift", "ar": "وردية", "category": "Main Job", "hint": "Work period (morning/night).", "exEn": "My shift starts at 7 a.m.", "exAr": "وردتي تبدأ الساعة 7 صباحًا."}, {"en": "schedule", "ar": "جدول", "category": "Main Job", "hint": "Plan of days and hours.", "exEn": "Check the schedule for tomorrow.", "exAr": "تحقق من الجدول لِغَدٍ."}, {"en": "early", "ar": "مبكر", "category": "Main Job", "hint": "Before the expected time.", "exEn": "I arrived early today.", "exAr": "وصلتُ مبكرًا اليوم."}, {"en": "late", "ar": "متأخر", "category": "Main Job", "hint": "After the expected time.", "exEn": "I was late because of traffic.", "exAr": "تأخرتُ بسبب الزحام."}, {"en": "on time", "ar": "في الوقت", "category": "Main Job", "hint": "At the correct time.", "exEn": "Please be on time.", "exAr": "من فضلك كن في الوقت."}, {"en": "overtime", "ar": "وقت إضافي", "category": "Main Job", "hint": "Extra work hours.", "exEn": "I did overtime this week.", "exAr": "عملتُ وقتًا إضافيًا هذا الأسبوع."}, {"en": "today", "ar": "اليوم", "category": "Main Job", "hint": "This day.", "exEn": "We work today.", "exAr": "نحن نعمل اليوم."}, {"en": "tomorrow", "ar": "غدًا", "category": "Main Job", "hint": "The next day.", "exEn": "I will come tomorrow.", "exAr": "سآتي غدًا."}, {"en": "now", "ar": "الآن", "category": "Main Job", "hint": "At this moment.", "exEn": "Do it now.", "exAr": "افعل ذلك الآن."}, {"en": "later", "ar": "لاحقًا", "category": "Main Job", "hint": "After some time.", "exEn": "We can do it later.", "exAr": "يمكننا فعل ذلك لاحقًا."}, {"en": "busy", "ar": "مشغول", "category": "Main Job", "hint": "Having a lot to do.", "exEn": "I am busy right now.", "exAr": "أنا مشغول الآن."}, {"en": "free", "ar": "متفرغ", "category": "Main Job", "hint": "Not busy; available.", "exEn": "Are you free to help?", "exAr": "هل أنت متفرغ لتساعد؟"}, {"en": "available", "ar": "متاح", "category": "Main Job", "hint": "Able to help or work.", "exEn": "I am available after lunch.", "exAr": "أنا متاح بعد الغداء."}, {"en": "unavailable", "ar": "غير متاح", "category": "Main Job", "hint": "Not able to help.", "exEn": "I am unavailable right now.", "exAr": "أنا غير متاح الآن."}, {"en": "task", "ar": "مهمة", "category": "Main Job", "hint": "A job you need to do.", "exEn": "Finish this task first.", "exAr": "أنهِ هذه المهمة أولًا."}, {"en": "job", "ar": "عمل", "category": "Main Job", "hint": "Work you do.", "exEn": "This job is easy.", "exAr": "هذا العمل سهل."}, {"en": "work", "ar": "يعمل", "category": "Main Job", "hint": "Do your job.", "exEn": "I work with my team.", "exAr": "أنا أعمل مع فريقي."}, {"en": "assignment", "ar": "تكليف", "category": "Main Job", "hint": "A specific task given to you.", "exEn": "Your assignment is in aisle three.", "exAr": "تكليفك في الممر رقم ثلاثة."}, {"en": "duty", "ar": "واجب", "category": "Main Job", "hint": "A responsibility at work.", "exEn": "Safety is everyone’s duty.", "exAr": "السلامة واجب الجميع."}, {"en": "responsibility", "ar": "مسؤولية", "category": "Main Job", "hint": "Something you must take care of.", "exEn": "This is my responsibility.", "exAr": "هذه مسؤوليتي."}, {"en": "finish", "ar": "ينهي", "category": "Main Job", "hint": "Complete something.", "exEn": "Finish the cleaning.", "exAr": "أنهِي التنظيف."}, {"en": "start", "ar": "يبدأ", "category": "Main Job", "hint": "Begin something.", "exEn": "Start with this shelf.", "exAr": "ابدأ بهذا الرف."}, {"en": "complete", "ar": "يكمّل", "category": "Main Job", "hint": "Finish fully.", "exEn": "Complete the form.", "exAr": "أكمل الاستمارة."}, {"en": "stop", "ar": "يتوقف", "category": "Main Job", "hint": "Do not continue.", "exEn": "Stop and ask the supervisor.", "exAr": "توقف واسأل المشرف."}, {"en": "continue", "ar": "يستمر", "category": "Main Job", "hint": "Keep going.", "exEn": "Continue the work.", "exAr": "استمر في العمل."}, {"en": "check", "ar": "يتحقق", "category": "Main Job", "hint": "Look to confirm.", "exEn": "Check the label.", "exAr": "تحقق من الملصق."}, {"en": "fix", "ar": "يصلح", "category": "Main Job", "hint": "Repair or correct.", "exEn": "Fix the problem.", "exAr": "أصلح المشكلة."}, {"en": "help", "ar": "مساعدة", "category": "Main Job", "hint": "Assist someone.", "exEn": "Help your coworker.", "exAr": "ساعد زميلك."}, {"en": "assistance", "ar": "مساعدة", "category": "Main Job", "hint": "Help (noun).", "exEn": "Thank you for the assistance.", "exAr": "شكرًا على المساعدة."}, {"en": "handle", "ar": "يتعامل مع", "category": "Main Job", "hint": "Manage a situation.", "exEn": "Handle it carefully.", "exAr": "تعامل معه بحذر."}, {"en": "follow", "ar": "يتبع", "category": "Main Job", "hint": "Go after / obey.", "exEn": "Follow me, please.", "exAr": "اتبعني من فضلك."}, {"en": "follow instructions", "ar": "اتبع التعليمات", "category": "Main Job", "hint": "Do what the steps say.", "exEn": "Follow instructions step by step.", "exAr": "اتبع التعليمات خطوة بخطوة."}, {"en": "coworker", "ar": "زميل عمل", "category": "Main Job", "hint": "Person you work with.", "exEn": "My coworker is very helpful.", "exAr": "زميلي في العمل مفيد جدًا."}, {"en": "teammate", "ar": "عضو في الفريق", "category": "Main Job", "hint": "Person on your team.", "exEn": "Ask a teammate for help.", "exAr": "اسأل أحد أعضاء الفريق للمساعدة."}, {"en": "supervisor", "ar": "مشرف", "category": "Main Job", "hint": "Person who manages the team.", "exEn": "Tell the supervisor about the issue.", "exAr": "أخبر المشرف عن المشكلة."}, {"en": "manager", "ar": "مدير", "category": "Main Job", "hint": "Person in charge.", "exEn": "The manager approved it.", "exAr": "وافق المدير على ذلك."}, {"en": "lead", "ar": "قائد", "category": "Main Job", "hint": "Team leader.", "exEn": "The lead will explain the task.", "exAr": "القائد سيشرح المهمة."}, {"en": "trainer", "ar": "مدرب", "category": "Main Job", "hint": "Person who teaches the job.", "exEn": "The trainer showed me the process.", "exAr": "المدرب أراني الطريقة."}, {"en": "customer", "ar": "زبون", "category": "Main Job", "hint": "Person who buys items.", "exEn": "Help the customer politely.", "exAr": "ساعد الزبون بأدب."}, {"en": "ask", "ar": "يسأل", "category": "Main Job", "hint": "Request information.", "exEn": "Ask if you are not sure.", "exAr": "اسأل إذا لم تكن متأكدًا."}, {"en": "tell", "ar": "يخبر", "category": "Main Job", "hint": "Give information.", "exEn": "Tell me when you finish.", "exAr": "أخبرني عندما تنتهي."}, {"en": "explain", "ar": "يشرح", "category": "Main Job", "hint": "Make it clear.", "exEn": "Please explain again.", "exAr": "من فضلك اشرح مرة أخرى."}, {"en": "show", "ar": "يري", "category": "Main Job", "hint": "Demonstrate.", "exEn": "Show me how to do it.", "exAr": "أرني كيف أفعل ذلك."}, {"en": "remind", "ar": "يذكّر", "category": "Main Job", "hint": "Help someone remember.", "exEn": "Remind me later.", "exAr": "ذكّرني لاحقًا."}, {"en": "request", "ar": "طلب", "category": "Main Job", "hint": "Ask for something (noun).", "exEn": "I have a request.", "exAr": "لدي طلب."}, {"en": "respond", "ar": "يرد", "category": "Main Job", "hint": "Answer back.", "exEn": "Respond quickly.", "exAr": "رد بسرعة."}, {"en": "answer", "ar": "يجيب", "category": "Main Job", "hint": "Give an answer.", "exEn": "Answer the customer.", "exAr": "أجب الزبون."}, {"en": "grab", "ar": "يُحضر بسرعة", "category": "Main Job", "hint": "Get something quickly.", "exEn": "Grab that box, please.", "exAr": "أحضر ذلك الصندوق بسرعة من فضلك."}, {"en": "bring", "ar": "يُحضر", "category": "Main Job", "hint": "Carry something to a place.", "exEn": "Bring the cart here.", "exAr": "أحضر العربة إلى هنا."}, {"en": "take", "ar": "يأخذ", "category": "Main Job", "hint": "Carry or accept.", "exEn": "Take this to the backroom.", "exAr": "خذ هذا إلى المخزن الخلفي."}, {"en": "move", "ar": "ينقل", "category": "Main Job", "hint": "Change position.", "exEn": "Move the pallet carefully.", "exAr": "انقل المنصة بحذر."}, {"en": "carry", "ar": "يحمل", "category": "Main Job", "hint": "Hold and move.", "exEn": "Carry it with both hands.", "exAr": "احمله بكلتا اليدين."}, {"en": "place", "ar": "يضع", "category": "Main Job", "hint": "Put in a location.", "exEn": "Place it on the shelf.", "exAr": "ضعه على الرف."}, {"en": "remove", "ar": "يزيل", "category": "Main Job", "hint": "Take away.", "exEn": "Remove the empty box.", "exAr": "أزل الصندوق الفارغ."}, {"en": "install", "ar": "يركّب", "category": "Main Job", "hint": "Put in place.", "exEn": "Install the sign today.", "exAr": "ركّب اللافتة اليوم."}, {"en": "replace", "ar": "يستبدل", "category": "Main Job", "hint": "Put a new one instead.", "exEn": "Replace the damaged label.", "exAr": "استبدل الملصق التالف."}, {"en": "clean up", "ar": "ينظف", "category": "Main Job", "hint": "Make the area clean.", "exEn": "Clean up the area now.", "exAr": "نظف المنطقة الآن."}, {"en": "put away", "ar": "يعيد لمكانه", "category": "Main Job", "hint": "Return to the correct place.", "exEn": "Put away the tools.", "exAr": "أعد الأدوات إلى مكانها."}, {"en": "set up", "ar": "يجهّز", "category": "Main Job", "hint": "Prepare.", "exEn": "Set up the display.", "exAr": "جهّز العرض."}, {"en": "organize", "ar": "ينظم", "category": "Main Job", "hint": "Arrange neatly.", "exEn": "Organize the items by size.", "exAr": "نظم الأشياء حسب الحجم."}, {"en": "arrange", "ar": "يرتب", "category": "Main Job", "hint": "Put in order.", "exEn": "Arrange the boxes.", "exAr": "رتب الصناديق."}, {"en": "wait", "ar": "ينتظر", "category": "Main Job", "hint": "Stay until later.", "exEn": "Wait here, please.", "exAr": "انتظر هنا من فضلك."}, {"en": "hurry", "ar": "يسرع", "category": "Main Job", "hint": "Move faster.", "exEn": "Hurry, we are late.", "exAr": "أسرع، نحن متأخرون."}, {"en": "slow down", "ar": "يبطئ", "category": "Main Job", "hint": "Go more slowly.", "exEn": "Slow down and be careful.", "exAr": "أبطئ وكن حذرًا."}, {"en": "be careful", "ar": "كن حذرًا", "category": "Main Job", "hint": "Avoid danger.", "exEn": "Be careful on the stairs.", "exAr": "كن حذرًا على الدرج."}, {"en": "shelf", "ar": "رف", "category": "Main Job", "hint": "Place where items are stored.", "exEn": "Put it on the shelf.", "exAr": "ضعه على الرف."}, {"en": "aisle", "ar": "ممر", "category": "Main Job", "hint": "Row in a store.", "exEn": "Go to aisle five.", "exAr": "اذهب إلى الممر رقم خمسة."}, {"en": "area", "ar": "منطقة", "category": "Main Job", "hint": "A place or section.", "exEn": "Keep this area clean.", "exAr": "حافظ على نظافة هذه المنطقة."}, {"en": "section", "ar": "قسم", "category": "Main Job", "hint": "Part of a store.", "exEn": "This section is closed.", "exAr": "هذا القسم مغلق."}, {"en": "backroom", "ar": "المخزن الخلفي", "category": "Main Job", "hint": "Storage area.", "exEn": "Take it to the backroom.", "exAr": "خذه إلى المخزن الخلفي."}, {"en": "front", "ar": "الأمام", "category": "Main Job", "hint": "Front area of the store.", "exEn": "Meet me at the front.", "exAr": "قابلني في الأمام."}, {"en": "here", "ar": "هنا", "category": "Main Job", "hint": "This place.", "exEn": "Put it here.", "exAr": "ضعه هنا."}, {"en": "there", "ar": "هناك", "category": "Main Job", "hint": "That place.", "exEn": "Put it there.", "exAr": "ضعه هناك."}, {"en": "this", "ar": "هذا", "category": "Main Job", "hint": "Near item.", "exEn": "Take this box.", "exAr": "خذ هذا الصندوق."}, {"en": "that", "ar": "ذلك", "category": "Main Job", "hint": "Far item.", "exEn": "Take that box.", "exAr": "خذ ذلك الصندوق."}, {"en": "box", "ar": "صندوق", "category": "Main Job", "hint": "Container.", "exEn": "Open the box carefully.", "exAr": "افتح الصندوق بحذر."}, {"en": "item", "ar": "غرض", "category": "Main Job", "hint": "A product.", "exEn": "Scan the item.", "exAr": "امسح الغرض."}, {"en": "equipment", "ar": "معدات", "category": "Main Job", "hint": "Tools and machines.", "exEn": "Use the equipment safely.", "exAr": "استخدم المعدات بأمان."}, {"en": "tools", "ar": "أدوات", "category": "Main Job", "hint": "Hand tools.", "exEn": "Put away the tools.", "exAr": "أعد الأدوات إلى مكانها."}, {"en": "please", "ar": "من فضلك", "category": "Main Job", "hint": "Polite request word.", "exEn": "Please help me.", "exAr": "من فضلك ساعدني."}, {"en": "thank you", "ar": "شكرًا", "category": "Main Job", "hint": "Polite gratitude.", "exEn": "Thank you for your help.", "exAr": "شكرًا على مساعدتك."}, {"en": "you’re welcome", "ar": "على الرحب والسعة", "category": "Main Job", "hint": "Reply to thanks.", "exEn": "You’re welcome.", "exAr": "على الرحب والسعة."}, {"en": "excuse me", "ar": "عذرًا", "category": "Main Job", "hint": "Polite interruption.", "exEn": "Excuse me, can I pass?", "exAr": "عذرًا، هل يمكنني المرور؟"}, {"en": "sorry", "ar": "آسف", "category": "Main Job", "hint": "Apology.", "exEn": "Sorry, I made a mistake.", "exAr": "آسف، لقد ارتكبت خطأ."}, {"en": "I don’t understand", "ar": "لا أفهم", "category": "Main Job", "hint": "Not clear to you.", "exEn": "I don’t understand the instruction.", "exAr": "لا أفهم التعليمات."}, {"en": "repeat, please", "ar": "أعد من فضلك", "category": "Main Job", "hint": "Ask to say again.", "exEn": "Repeat, please.", "exAr": "أعد من فضلك."}, {"en": "one moment", "ar": "لحظة واحدة", "category": "Main Job", "hint": "Wait briefly.", "exEn": "One moment, please.", "exAr": "لحظة واحدة من فضلك."}, {"en": "no problem", "ar": "لا مشكلة", "category": "Main Job", "hint": "It’s okay.", "exEn": "No problem, I can do it.", "exAr": "لا مشكلة، يمكنني فعل ذلك."}, {"en": "that’s okay", "ar": "لا بأس", "category": "Main Job", "hint": "It is fine.", "exEn": "That’s okay.", "exAr": "لا بأس."}, {"en": "SDS", "ar": "صحيفة بيانات السلامة", "category": "Chemical Safety & SDS", "hint": "Safety Data Sheet for a chemical.", "exEn": "Read the SDS before using a new chemical.", "exAr": "اقرأ صحيفة بيانات السلامة قبل استخدام مادة كيميائية جديدة."}, {"en": "chemical", "ar": "مادة كيميائية", "category": "Chemical Safety & SDS", "hint": "A cleaning or industrial substance.", "exEn": "Use the chemical as instructed.", "exAr": "استخدم المادة الكيميائية حسب التعليمات."}, {"en": "label", "ar": "ملصق", "category": "Chemical Safety & SDS", "hint": "Information sticker on a product.", "exEn": "Check the label before use.", "exAr": "تحقق من الملصق قبل الاستخدام."}, {"en": "hazard", "ar": "خطر", "category": "Chemical Safety & SDS", "hint": "Something that can cause harm.", "exEn": "This chemical is a hazard.", "exAr": "هذه المادة الكيميائية خطر."}, {"en": "hazard statement", "ar": "عبارة الخطر", "category": "Chemical Safety & SDS", "hint": "Text that explains the hazard.", "exEn": "Read the hazard statement on the bottle.", "exAr": "اقرأ عبارة الخطر على الزجاجة."}, {"en": "signal word", "ar": "كلمة الإشارة", "category": "Chemical Safety & SDS", "hint": "Danger or Warning on a label.", "exEn": "The signal word is on top of the label.", "exAr": "كلمة الإشارة في أعلى الملصق."}, {"en": "danger", "ar": "خطر شديد", "category": "Chemical Safety & SDS", "hint": "Strong warning word.", "exEn": "The label says danger.", "exAr": "الملصق يقول خطر شديد."}, {"en": "warning", "ar": "تحذير", "category": "Chemical Safety & SDS", "hint": "Moderate warning word.", "exEn": "The label says warning.", "exAr": "الملصق يقول تحذير."}, {"en": "pictograms", "ar": "الرموز التحذيرية", "category": "Chemical Safety & SDS", "hint": "Hazard icons on labels.", "exEn": "Check the pictograms before using it.", "exAr": "تحقق من الرموز التحذيرية قبل استخدامه."}, {"en": "flammable", "ar": "قابل للاشتعال", "category": "Chemical Safety & SDS", "hint": "Can catch fire easily.", "exEn": "Keep flammable products away from heat.", "exAr": "أبعد المواد القابلة للاشتعال عن الحرارة."}, {"en": "combustible", "ar": "قابل للاحتراق", "category": "Chemical Safety & SDS", "hint": "Can burn.", "exEn": "Store combustible items safely.", "exAr": "خزّن المواد القابلة للاحتراق بأمان."}, {"en": "toxic", "ar": "سام", "category": "Chemical Safety & SDS", "hint": "Poisonous.", "exEn": "Do not touch toxic chemicals.", "exAr": "لا تلمس مواد كيميائية سامة."}, {"en": "poisonous", "ar": "سام", "category": "Chemical Safety & SDS", "hint": "Very harmful.", "exEn": "Poisonous chemicals need care.", "exAr": "المواد السامة تحتاج حذرًا."}, {"en": "fumes", "ar": "أبخرة", "category": "Chemical Safety & SDS", "hint": "Gas you can breathe in.", "exEn": "Do not breathe the fumes.", "exAr": "لا تستنشق الأبخرة."}, {"en": "ventilation", "ar": "تهوية", "category": "Chemical Safety & SDS", "hint": "Fresh air movement.", "exEn": "Open ventilation when cleaning.", "exAr": "افتح التهوية أثناء التنظيف."}, {"en": "ventilate", "ar": "يهوّي", "category": "Chemical Safety & SDS", "hint": "Bring fresh air.", "exEn": "Ventilate the room.", "exAr": "هوِّ الغرفة."}, {"en": "dilution", "ar": "تخفيف", "category": "Chemical Safety & SDS", "hint": "Mix with water to weaken.", "exEn": "Use the right dilution with water.", "exAr": "استخدم التخفيف الصحيح بالماء."}, {"en": "dilute", "ar": "يخفف", "category": "Chemical Safety & SDS", "hint": "Make weaker with water.", "exEn": "Dilute the cleaner with water.", "exAr": "خفف المنظف بالماء."}, {"en": "concentrated", "ar": "مركز", "category": "Chemical Safety & SDS", "hint": "Strong and not diluted.", "exEn": "Concentrated cleaner can be strong.", "exAr": "المنظف المركز قد يكون قويًا."}, {"en": "safe", "ar": "آمن", "category": "Chemical Safety & SDS", "hint": "Not dangerous.", "exEn": "Use it in a safe way.", "exAr": "استخدمه بطريقة آمنة."}, {"en": "dangerous", "ar": "خطير", "category": "Chemical Safety & SDS", "hint": "Not safe.", "exEn": "This mix is dangerous.", "exAr": "هذا الخليط خطير."}, {"en": "corrosion", "ar": "تآكل/مواد آكلة", "category": "Chemical Safety & SDS", "hint": "Can burn skin or metal.", "exEn": "Corrosion can damage skin.", "exAr": "المواد الآكلة قد تُتلف الجلد."}, {"en": "corrosive", "ar": "آكل", "category": "Chemical Safety & SDS", "hint": "Causes corrosion.", "exEn": "Corrosive chemicals need gloves.", "exAr": "المواد الآكلة تحتاج قفازات."}, {"en": "irritant", "ar": "مُهيِّج", "category": "Chemical Safety & SDS", "hint": "Can irritate skin/eyes.", "exEn": "This product is an irritant.", "exAr": "هذا المنتج مُهيِّج."}, {"en": "bleach", "ar": "مبيّض/كلور", "category": "Chemical Safety & SDS", "hint": "Strong cleaner.", "exEn": "Do not mix bleach with other chemicals.", "exAr": "لا تخلط الكلور مع مواد أخرى."}, {"en": "ammonia", "ar": "أمونيا", "category": "Chemical Safety & SDS", "hint": "Strong chemical.", "exEn": "Do not mix ammonia with bleach.", "exAr": "لا تخلط الأمونيا مع الكلور."}, {"en": "spill", "ar": "انسكاب", "category": "Chemical Safety & SDS", "hint": "Liquid on the floor.", "exEn": "Clean a chemical spill immediately.", "exAr": "نظف انسكاب مادة كيميائية فورًا."}, {"en": "spill kit", "ar": "عدة الانسكاب", "category": "Chemical Safety & SDS", "hint": "Tools to clean spills.", "exEn": "Use the spill kit for the spill.", "exAr": "استخدم عدة الانسكاب للانسكاب."}, {"en": "PPE", "ar": "معدات الوقاية الشخصية", "category": "PPE & Respiratory", "hint": "Personal Protective Equipment.", "exEn": "Wear PPE when required.", "exAr": "ارتدِ معدات الوقاية الشخصية عند الحاجة."}, {"en": "gloves", "ar": "قفازات", "category": "PPE & Respiratory", "hint": "Hand protection.", "exEn": "Wear gloves when cleaning.", "exAr": "ارتدِ قفازات عند التنظيف."}, {"en": "safety glasses", "ar": "نظارات واقية", "category": "PPE & Respiratory", "hint": "Eye protection.", "exEn": "Use safety glasses for protection.", "exAr": "استخدم نظارات واقية للحماية."}, {"en": "face shield", "ar": "درع للوجه", "category": "PPE & Respiratory", "hint": "Full face protection.", "exEn": "Use a face shield for splashes.", "exAr": "استخدم درعًا للوجه ضد الرذاذ."}, {"en": "mask", "ar": "كمامة", "category": "PPE & Respiratory", "hint": "Face covering.", "exEn": "Wear a mask in dusty areas.", "exAr": "ارتدِ كمامة في مناطق الغبار."}, {"en": "face covering", "ar": "غطاء للوجه", "category": "PPE & Respiratory", "hint": "Mask or covering.", "exEn": "Use a face covering if required.", "exAr": "استخدم غطاء للوجه إذا كان مطلوبًا."}, {"en": "N95 respirator", "ar": "كمامة N95", "category": "PPE & Respiratory", "hint": "Filters airborne particles.", "exEn": "Use an N95 respirator for dust.", "exAr": "استخدم كمامة N95 للغبار."}, {"en": "respirator", "ar": "جهاز تنفّس/كمامة حماية", "category": "PPE & Respiratory", "hint": "Breathing protection.", "exEn": "A respirator helps with fumes.", "exAr": "جهاز التنفس يساعد ضد الأبخرة."}, {"en": "dust mask", "ar": "كمامة غبار", "category": "PPE & Respiratory", "hint": "Basic dust protection.", "exEn": "Wear a dust mask while sweeping.", "exAr": "ارتدِ كمامة غبار أثناء الكنس."}, {"en": "earplugs", "ar": "سدادات أذن", "category": "PPE & Respiratory", "hint": "Hearing protection.", "exEn": "Use earplugs in loud areas.", "exAr": "استخدم سدادات أذن في الأماكن المزعجة."}, {"en": "hard hat", "ar": "خوذة أمان", "category": "PPE & Respiratory", "hint": "Head protection.", "exEn": "Wear a hard hat in construction areas.", "exAr": "ارتدِ خوذة أمان في مناطق البناء."}, {"en": "safety vest", "ar": "سترة سلامة", "category": "PPE & Respiratory", "hint": "High-visibility vest.", "exEn": "Wear a safety vest in the backroom.", "exAr": "ارتدِ سترة سلامة في المخزن الخلفي."}, {"en": "steel-toe shoes", "ar": "أحذية بمقدمة حديد", "category": "PPE & Respiratory", "hint": "Foot protection.", "exEn": "Use steel-toe shoes for heavy work.", "exAr": "استخدم أحذية بمقدمة حديد للأعمال الثقيلة."}, {"en": "protect", "ar": "يحمي", "category": "PPE & Respiratory", "hint": "Keep safe.", "exEn": "Protect your eyes.", "exAr": "احمِ عينيك."}, {"en": "protection", "ar": "حماية", "category": "PPE & Respiratory", "hint": "Safety from harm.", "exEn": "Eye protection is important.", "exAr": "حماية العين مهمة."}, {"en": "exposed", "ar": "مكشوف", "category": "PPE & Respiratory", "hint": "Not protected.", "exEn": "Do not leave skin exposed.", "exAr": "لا تترك الجلد مكشوفًا."}, {"en": "covered", "ar": "مغطى", "category": "PPE & Respiratory", "hint": "Protected by covering.", "exEn": "Keep the wound covered.", "exAr": "أبقِ الجرح مغطى."}, {"en": "first aid", "ar": "إسعافات أولية", "category": "PPE & Respiratory", "hint": "Basic help for injuries.", "exEn": "Go to first aid if you get a cut.", "exAr": "اذهب للإسعافات الأولية إذا تعرضت لجرح."}, {"en": "wet floor", "ar": "أرضية مبللة", "category": "Slips/Trips/Falls", "hint": "Common slip hazard.", "exEn": "Put a sign on a wet floor.", "exAr": "ضع لافتة على أرضية مبللة."}, {"en": "dry", "ar": "جاف", "category": "Slips/Trips/Falls", "hint": "Not wet.", "exEn": "Wait until the floor is dry.", "exAr": "انتظر حتى تصبح الأرضية جافة."}, {"en": "slippery", "ar": "زلق", "category": "Slips/Trips/Falls", "hint": "Easy to slip on.", "exEn": "This floor is slippery.", "exAr": "هذه الأرضية زلقة."}, {"en": "slick", "ar": "زلق", "category": "Slips/Trips/Falls", "hint": "Very slippery.", "exEn": "The area is slick.", "exAr": "المنطقة زلقة."}, {"en": "caution sign", "ar": "لافتة تحذير", "category": "Slips/Trips/Falls", "hint": "Warning sign near hazards.", "exEn": "Use a caution sign near the spill.", "exAr": "استخدم لافتة تحذير قرب الانسكاب."}, {"en": "spill", "ar": "انسكاب", "category": "Slips/Trips/Falls", "hint": "Liquid on the floor.", "exEn": "Clean the spill now.", "exAr": "نظف الانسكاب الآن."}, {"en": "clean spill", "ar": "ينظف الانسكاب", "category": "Slips/Trips/Falls", "hint": "Remove liquid safely.", "exEn": "Clean the spill with towels.", "exAr": "نظف الانسكاب بالمناديل."}, {"en": "trip hazard", "ar": "خطر التعثر", "category": "Slips/Trips/Falls", "hint": "Something you can trip on.", "exEn": "Move cords to remove trip hazards.", "exAr": "انقل الأسلاك لإزالة خطر التعثر."}, {"en": "cord", "ar": "سلك", "category": "Slips/Trips/Falls", "hint": "Cable on floor.", "exEn": "Do not leave a cord on the floor.", "exAr": "لا تترك سلكًا على الأرض."}, {"en": "cracks", "ar": "شقوق", "category": "Slips/Trips/Falls", "hint": "Breaks in floor.", "exEn": "Report cracks on the floor.", "exAr": "بلّغ عن الشقوق في الأرضية."}, {"en": "uneven", "ar": "غير مستوٍ", "category": "Slips/Trips/Falls", "hint": "Not flat.", "exEn": "Be careful on uneven ground.", "exAr": "كن حذرًا على أرض غير مستوية."}, {"en": "watch your step", "ar": "انتبه لخطوتك", "category": "Slips/Trips/Falls", "hint": "Be careful walking.", "exEn": "Watch your step here.", "exAr": "انتبه لخطوتك هنا."}, {"en": "watch your last step", "ar": "انتبه لآخر خطوة", "category": "Slips/Trips/Falls", "hint": "Be careful on final step.", "exEn": "Watch your last step on the stairs.", "exAr": "انتبه لآخر خطوة على الدرج."}, {"en": "fall", "ar": "يسقط", "category": "Slips/Trips/Falls", "hint": "Drop to the ground.", "exEn": "Do not run and fall.", "exAr": "لا تركض كي لا تسقط."}, {"en": "injury", "ar": "إصابة", "category": "Slips/Trips/Falls", "hint": "Harm to body.", "exEn": "Report any injury.", "exAr": "بلّغ عن أي إصابة."}, {"en": "team lift", "ar": "رفع جماعي", "category": "Lifting & Equipment", "hint": "Two people lift together.", "exEn": "Use a team lift for heavy items.", "exAr": "استخدم رفعًا جماعيًا للأشياء الثقيلة."}, {"en": "lift", "ar": "يرفع", "category": "Lifting & Equipment", "hint": "Raise an item.", "exEn": "Lift with your legs.", "exAr": "ارفع بساقيك."}, {"en": "lifting", "ar": "رفع", "category": "Lifting & Equipment", "hint": "The act of lifting.", "exEn": "Safe lifting prevents injuries.", "exAr": "الرفع الآمن يمنع الإصابات."}, {"en": "heavy", "ar": "ثقيل", "category": "Lifting & Equipment", "hint": "Not easy to lift.", "exEn": "This box is heavy.", "exAr": "هذا الصندوق ثقيل."}, {"en": "light", "ar": "خفيف", "category": "Lifting & Equipment", "hint": "Not heavy.", "exEn": "This box is light.", "exAr": "هذا الصندوق خفيف."}, {"en": "carry", "ar": "يحمل", "category": "Lifting & Equipment", "hint": "Move while holding.", "exEn": "Carry it carefully.", "exAr": "احمله بحذر."}, {"en": "cart", "ar": "عربة", "category": "Lifting & Equipment", "hint": "Wheeled carrier.", "exEn": "Use a cart for heavy boxes.", "exAr": "استخدم عربة للصناديق الثقيلة."}, {"en": "trolley", "ar": "عربة", "category": "Lifting & Equipment", "hint": "Cart synonym.", "exEn": "Push the trolley slowly.", "exAr": "ادفع العربة ببطء."}, {"en": "pallet", "ar": "منصة (بالت)", "category": "Lifting & Equipment", "hint": "Wood platform for goods.", "exEn": "Move the pallet to the back.", "exAr": "انقل المنصة إلى الخلف."}, {"en": "pallet jack", "ar": "رافعة منصات يدوية", "category": "Lifting & Equipment", "hint": "Tool to move pallets.", "exEn": "Use the pallet jack correctly.", "exAr": "استخدم رافعة المنصات بشكل صحيح."}, {"en": "forklift", "ar": "رافعة شوكية", "category": "Lifting & Equipment", "hint": "Powered lifting machine.", "exEn": "Only trained workers use a forklift.", "exAr": "فقط الموظفون المدربون يستخدمون الرافعة الشوكية."}, {"en": "ladder", "ar": "سُلّم", "category": "Lifting & Equipment", "hint": "Climbing tool.", "exEn": "Use a ladder safely.", "exAr": "استخدم السلم بأمان."}, {"en": "step ladder", "ar": "سُلّم متدرّج", "category": "Lifting & Equipment", "hint": "Small ladder.", "exEn": "Use a step ladder for high shelves.", "exAr": "استخدم سلمًا متدرجًا للرفوف العالية."}, {"en": "step stool", "ar": "مقعد/سلم صغير", "category": "Lifting & Equipment", "hint": "Small step tool.", "exEn": "Use a step stool for short height.", "exAr": "استخدم سلمًا صغيرًا للارتفاع القصير."}, {"en": "box cutter", "ar": "قطّاعة كرتون", "category": "Lifting & Equipment", "hint": "Knife for opening boxes.", "exEn": "Use the box cutter carefully.", "exAr": "استخدم قطّاعة الكرتون بحذر."}, {"en": "blade", "ar": "شفرة", "category": "Lifting & Equipment", "hint": "Cutting part.", "exEn": "Replace the blade when needed.", "exAr": "استبدل الشفرة عند الحاجة."}, {"en": "sharp", "ar": "حاد", "category": "Lifting & Equipment", "hint": "Cuts easily.", "exEn": "A sharp blade can cut fast.", "exAr": "الشفرة الحادة تقطع بسرعة."}, {"en": "dull", "ar": "غير حاد", "category": "Lifting & Equipment", "hint": "Not sharp.", "exEn": "A dull blade is unsafe.", "exAr": "الشفرة غير الحادة غير آمنة."}, {"en": "baler", "ar": "مكبس كرتون/بلاستيك", "category": "Lifting & Equipment", "hint": "Machine that compresses cardboard.", "exEn": "Put cardboard in the baler.", "exAr": "ضع الكرتون في المكبس."}, {"en": "compactor", "ar": "ضاغط نفايات", "category": "Lifting & Equipment", "hint": "Machine that compresses trash.", "exEn": "Use the compactor for trash.", "exAr": "استخدم الضاغط للنفايات."}, {"en": "strap", "ar": "حزام/رباط", "category": "Lifting & Equipment", "hint": "Tie-down strap.", "exEn": "Use a strap to secure the load.", "exAr": "استخدم رباطًا لتثبيت الحمولة."}, {"en": "secure", "ar": "يُثبّت", "category": "Lifting & Equipment", "hint": "Make safe and tight.", "exEn": "Secure the boxes on the cart.", "exAr": "ثبّت الصناديق على العربة."}, {"en": "load", "ar": "حمولة", "category": "Lifting & Equipment", "hint": "Items being carried.", "exEn": "Do not overload the cart.", "exAr": "لا تضع حمولة زائدة على العربة."}, {"en": "asset protection", "ar": "حماية الأصول", "category": "Asset Protection", "hint": "Prevent loss/damage to property.", "exEn": "Asset protection helps prevent loss.", "exAr": "حماية الأصول تساعد على منع الخسائر."}, {"en": "loss prevention", "ar": "منع الخسائر", "category": "Asset Protection", "hint": "Another term for asset protection.", "exEn": "Loss prevention is important.", "exAr": "منع الخسائر مهم."}, {"en": "shoplifter", "ar": "سارق متجر", "category": "Asset Protection", "hint": "Person who steals from stores.", "exEn": "Do not confront a shoplifter.", "exAr": "لا تواجه سارق المتجر."}, {"en": "theft", "ar": "سرقة", "category": "Asset Protection", "hint": "Act of stealing.", "exEn": "Report theft to the supervisor.", "exAr": "بلّغ عن السرقة للمشرف."}, {"en": "steal", "ar": "يسرق", "category": "Asset Protection", "hint": "Take without paying.", "exEn": "Do not steal.", "exAr": "لا تسرق."}, {"en": "suspected", "ar": "مشتبه به", "category": "Asset Protection", "hint": "Not confirmed but possible.", "exEn": "Report suspected theft.", "exAr": "بلّغ عن سرقة مشتبه بها."}, {"en": "suspicion", "ar": "اشتباه", "category": "Asset Protection", "hint": "Feeling something may be wrong.", "exEn": "There is suspicion of theft.", "exAr": "هناك اشتباه بسرقة."}, {"en": "do not confront", "ar": "لا تواجه", "category": "Asset Protection", "hint": "Do not challenge directly.", "exEn": "Do not confront the person.", "exAr": "لا تواجه الشخص."}, {"en": "authorized", "ar": "مصرّح", "category": "Asset Protection", "hint": "Allowed by rules.", "exEn": "Only authorized staff enter.", "exAr": "فقط الموظفون المصرّح لهم يدخلون."}, {"en": "unauthorized", "ar": "غير مصرّح", "category": "Asset Protection", "hint": "Not allowed.", "exEn": "Unauthorized entry is not allowed.", "exAr": "الدخول غير المصرّح به غير مسموح."}, {"en": "witness", "ar": "شاهد", "category": "Asset Protection", "hint": "Person who saw it.", "exEn": "A witness saw the incident.", "exAr": "شاهد رأى الحادث."}, {"en": "camera", "ar": "كاميرا", "category": "Asset Protection", "hint": "Security camera.", "exEn": "The camera records video.", "exAr": "الكاميرا تسجل الفيديو."}, {"en": "statement", "ar": "إفادة", "category": "Asset Protection", "hint": "Written or spoken report.", "exEn": "Write a statement after the incident.", "exAr": "اكتب إفادة بعد الحادث."}, {"en": "report it", "ar": "بلّغ عنه", "category": "Asset Protection", "hint": "Tell management.", "exEn": "Report it right away.", "exAr": "بلّغ عنه فورًا."}, {"en": "incident", "ar": "حادث", "category": "Asset Protection", "hint": "Event that happened.", "exEn": "We reported the incident.", "exAr": "بلّغنا عن الحادث."}, {"en": "emergency", "ar": "حالة طوارئ", "category": "Emergency Awareness", "hint": "Urgent dangerous situation.", "exEn": "In an emergency, follow instructions.", "exAr": "في حالة الطوارئ، اتبع التعليمات."}, {"en": "urgent", "ar": "عاجل", "category": "Emergency Awareness", "hint": "Needs quick action.", "exEn": "This is urgent.", "exAr": "هذا أمر عاجل."}, {"en": "evacuate", "ar": "يُخلي", "category": "Emergency Awareness", "hint": "Leave for safety.", "exEn": "Evacuate the building now.", "exAr": "أخلِ المبنى الآن."}, {"en": "evacuation", "ar": "إخلاء", "category": "Emergency Awareness", "hint": "Leaving the building for safety.", "exEn": "Follow the evacuation route.", "exAr": "اتبع مسار الإخلاء."}, {"en": "exit", "ar": "مخرج", "category": "Emergency Awareness", "hint": "Way out.", "exEn": "Use the nearest exit.", "exAr": "استخدم أقرب مخرج."}, {"en": "fire alarm", "ar": "إنذار حريق", "category": "Emergency Awareness", "hint": "Alarm for fire.", "exEn": "Pull the fire alarm if needed.", "exAr": "اسحب إنذار الحريق إذا لزم."}, {"en": "fire extinguisher", "ar": "طفاية حريق", "category": "Emergency Awareness", "hint": "Tool to put out fire.", "exEn": "Use the fire extinguisher safely.", "exAr": "استخدم طفاية الحريق بأمان."}, {"en": "assembly point", "ar": "نقطة تجمع", "category": "Emergency Awareness", "hint": "Meeting place outside.", "exEn": "Go to the assembly point.", "exAr": "اذهب إلى نقطة التجمع."}, {"en": "call 911", "ar": "اتصل بـ 911", "category": "Emergency Awareness", "hint": "Call emergency services.", "exEn": "Call 911 for serious emergencies.", "exAr": "اتصل بـ 911 في الطوارئ الخطيرة."}, {"en": "stay calm", "ar": "ابقَ هادئًا", "category": "Emergency Awareness", "hint": "Do not panic.", "exEn": "Stay calm and listen.", "exAr": "ابق هادئًا واستمع."}, {"en": "panic", "ar": "ذعر", "category": "Emergency Awareness", "hint": "Fear and confusion.", "exEn": "Do not panic.", "exAr": "لا تذعر."}, {"en": "injured", "ar": "مصاب", "category": "Emergency Awareness", "hint": "Hurt.", "exEn": "Help the injured person.", "exAr": "ساعد الشخص المصاب."}, {"en": "safe area", "ar": "منطقة آمنة", "category": "Emergency Awareness", "hint": "Place away from danger.", "exEn": "Move to a safe area.", "exAr": "انتقل إلى منطقة آمنة."}, {"en": "compliance", "ar": "امتثال", "category": "Conduct & Compliance", "hint": "Following rules and policies.", "exEn": "Compliance is important at work.", "exAr": "الامتثال مهم في العمل."}, {"en": "comply", "ar": "يمتثل", "category": "Conduct & Compliance", "hint": "Follow a rule.", "exEn": "Comply with the policy.", "exAr": "امتثل للسياسة."}, {"en": "policy", "ar": "سياسة", "category": "Conduct & Compliance", "hint": "Company rule document.", "exEn": "Follow the company policy.", "exAr": "اتبع سياسة الشركة."}, {"en": "procedure", "ar": "إجراء", "category": "Conduct & Compliance", "hint": "Step-by-step process.", "exEn": "Follow the procedure step by step.", "exAr": "اتبع الإجراء خطوة بخطوة."}, {"en": "rule", "ar": "قاعدة", "category": "Conduct & Compliance", "hint": "A rule to follow.", "exEn": "This rule is important.", "exAr": "هذه القاعدة مهمة."}, {"en": "allowed", "ar": "مسموح", "category": "Conduct & Compliance", "hint": "Permitted.", "exEn": "This is allowed.", "exAr": "هذا مسموح."}, {"en": "prohibited", "ar": "ممنوع", "category": "Conduct & Compliance", "hint": "Not allowed.", "exEn": "Smoking is prohibited here.", "exAr": "التدخين ممنوع هنا."}, {"en": "training", "ar": "تدريب", "category": "Conduct & Compliance", "hint": "Learning the job rules.", "exEn": "Complete the training today.", "exAr": "أكمل التدريب اليوم."}, {"en": "train", "ar": "يدرّب", "category": "Conduct & Compliance", "hint": "Teach someone.", "exEn": "The lead will train you.", "exAr": "القائد سيدرّبك."}, {"en": "harassment", "ar": "تحرش", "category": "Conduct & Compliance", "hint": "Bad behavior at work.", "exEn": "Report harassment immediately.", "exAr": "بلّغ عن التحرش فورًا."}, {"en": "discrimination", "ar": "تمييز", "category": "Conduct & Compliance", "hint": "Unfair treatment.", "exEn": "Discrimination is not allowed.", "exAr": "التمييز غير مسموح."}, {"en": "confidential", "ar": "سري", "category": "Conduct & Compliance", "hint": "Private information.", "exEn": "Keep it confidential.", "exAr": "اجعلها سرية."}, {"en": "privacy", "ar": "خصوصية", "category": "Conduct & Compliance", "hint": "Keeping information private.", "exEn": "Respect customer privacy.", "exAr": "احترم خصوصية الزبون."}, {"en": "respect", "ar": "احترام", "category": "Conduct & Compliance", "hint": "Treat people well.", "exEn": "Respect your coworkers.", "exAr": "احترم زملاءك."}, {"en": "fair", "ar": "عادل", "category": "Conduct & Compliance", "hint": "Not biased.", "exEn": "Be fair to everyone.", "exAr": "كن عادلًا مع الجميع."}, {"en": "unfair", "ar": "غير عادل", "category": "Conduct & Compliance", "hint": "Not fair.", "exEn": "That is unfair.", "exAr": "هذا غير عادل."}, {"en": "inventory", "ar": "مخزون", "category": "Inventory & Dates", "hint": "All items in stock.", "exEn": "We check inventory every day.", "exAr": "نقوم بفحص المخزون كل يوم."}, {"en": "stock", "ar": "مخزون", "category": "Inventory & Dates", "hint": "Goods available.", "exEn": "Stock is low today.", "exAr": "المخزون قليل اليوم."}, {"en": "in stock", "ar": "متوفر", "category": "Inventory & Dates", "hint": "Available to sell.", "exEn": "This item is in stock.", "exAr": "هذا المنتج متوفر."}, {"en": "out of stock", "ar": "غير متوفر", "category": "Inventory & Dates", "hint": "Not available.", "exEn": "This item is out of stock.", "exAr": "هذا المنتج غير متوفر."}, {"en": "barcode", "ar": "باركود", "category": "Inventory & Dates", "hint": "Code you scan.", "exEn": "Scan the barcode.", "exAr": "امسح الباركود."}, {"en": "scan", "ar": "يمسح/يسكان", "category": "Inventory & Dates", "hint": "Read with a scanner.", "exEn": "Scan the item at the register.", "exAr": "امسح المنتج عند الصندوق."}, {"en": "scanner", "ar": "جهاز مسح", "category": "Inventory & Dates", "hint": "Device for scanning.", "exEn": "Use the scanner.", "exAr": "استخدم جهاز المسح."}, {"en": "label", "ar": "ملصق", "category": "Inventory & Dates", "hint": "Sticker information.", "exEn": "Print a label for the box.", "exAr": "اطبع ملصقًا للصندوق."}, {"en": "price tag", "ar": "بطاقة سعر", "category": "Inventory & Dates", "hint": "Price label.", "exEn": "Check the price tag.", "exAr": "تحقق من بطاقة السعر."}, {"en": "quantity", "ar": "كمية", "category": "Inventory & Dates", "hint": "How many items.", "exEn": "Check the quantity.", "exAr": "تحقق من الكمية."}, {"en": "count", "ar": "يعدّ", "category": "Inventory & Dates", "hint": "To count items.", "exEn": "Count the items on the shelf.", "exAr": "عدّ المنتجات على الرف."}, {"en": "counting", "ar": "عدّ", "category": "Inventory & Dates", "hint": "The act of counting.", "exEn": "Counting helps accuracy.", "exAr": "العد يساعد على الدقة."}, {"en": "expiration date", "ar": "تاريخ الانتهاء", "category": "Inventory & Dates", "hint": "Date after which it’s not good.", "exEn": "Check the expiration date.", "exAr": "تحقق من تاريخ الانتهاء."}, {"en": "expire", "ar": "ينتهي", "category": "Inventory & Dates", "hint": "Become out of date.", "exEn": "This product will expire soon.", "exAr": "هذا المنتج سينتهي قريبًا."}, {"en": "fresh", "ar": "طازج", "category": "Inventory & Dates", "hint": "Not old.", "exEn": "Keep fresh products in front.", "exAr": "ضع المنتجات الطازجة في الأمام."}, {"en": "damaged", "ar": "تالف", "category": "Inventory & Dates", "hint": "Broken or harmed.", "exEn": "Put damaged items aside.", "exAr": "ضع المنتجات التالفة جانبًا."}, {"en": "broken", "ar": "مكسور", "category": "Inventory & Dates", "hint": "Damaged.", "exEn": "This bottle is broken.", "exAr": "هذه الزجاجة مكسورة."}, {"en": "missing", "ar": "مفقود", "category": "Inventory & Dates", "hint": "Not found.", "exEn": "One item is missing.", "exAr": "هناك غرض مفقود."}, {"en": "lost", "ar": "ضائع", "category": "Inventory & Dates", "hint": "Missing.", "exEn": "The scanner is lost.", "exAr": "جهاز المسح ضائع."}, {"en": "return", "ar": "إرجاع", "category": "Inventory & Dates", "hint": "Bring back to store.", "exEn": "The customer wants a return.", "exAr": "الزبون يريد إرجاعًا."}, {"en": "exchange", "ar": "استبدال", "category": "Inventory & Dates", "hint": "Swap for another.", "exEn": "We can do an exchange.", "exAr": "يمكننا عمل استبدال."}, {"en": "first in, first out (FIFO)", "ar": "الأول دخولًا الأول خروجًا", "category": "Inventory & Dates", "hint": "Use older stock first.", "exEn": "Follow FIFO to rotate stock.", "exAr": "اتبع FIFO لتدوير المخزون."}, {"en": "clean", "ar": "نظيف", "category": "Cleaning & Housekeeping", "hint": "Not dirty.", "exEn": "Keep the area clean.", "exAr": "حافظ على نظافة المنطقة."}, {"en": "dirty", "ar": "متسخ", "category": "Cleaning & Housekeeping", "hint": "Not clean.", "exEn": "The floor is dirty.", "exAr": "الأرضية متسخة."}, {"en": "cleaning", "ar": "تنظيف", "category": "Cleaning & Housekeeping", "hint": "The act of cleaning.", "exEn": "Cleaning is part of the job.", "exAr": "التنظيف جزء من العمل."}, {"en": "broom", "ar": "مكنسة", "category": "Cleaning & Housekeeping", "hint": "Tool for sweeping.", "exEn": "Use a broom to sweep the floor.", "exAr": "استخدم مكنسة لكنس الأرضية."}, {"en": "sweep", "ar": "يكنس", "category": "Cleaning & Housekeeping", "hint": "Clean with a broom.", "exEn": "Sweep the aisle.", "exAr": "اكنس الممر."}, {"en": "mop", "ar": "ممسحة", "category": "Cleaning & Housekeeping", "hint": "Tool for wet cleaning.", "exEn": "Use a mop on the floor.", "exAr": "استخدم ممسحة على الأرض."}, {"en": "bucket", "ar": "دلو", "category": "Cleaning & Housekeeping", "hint": "Container for water.", "exEn": "Fill the bucket with water.", "exAr": "املأ الدلو بالماء."}, {"en": "paper towels", "ar": "مناديل ورقية", "category": "Cleaning & Housekeeping", "hint": "Disposable towels.", "exEn": "Use paper towels for the spill.", "exAr": "استخدم مناديل ورقية للانسكاب."}, {"en": "trash", "ar": "قمامة", "category": "Cleaning & Housekeeping", "hint": "Waste.", "exEn": "Throw trash in the bin.", "exAr": "ارمِ القمامة في السلة."}, {"en": "garbage", "ar": "قمامة", "category": "Cleaning & Housekeeping", "hint": "Trash synonym.", "exEn": "Take out the garbage.", "exAr": "أخرج القمامة."}, {"en": "recycle", "ar": "إعادة تدوير", "category": "Cleaning & Housekeeping", "hint": "Sort for reuse.", "exEn": "Recycle cardboard and plastic.", "exAr": "أعد تدوير الكرتون والبلاستيك."}, {"en": "recycling bin", "ar": "سلة إعادة التدوير", "category": "Cleaning & Housekeeping", "hint": "Bin for recycling.", "exEn": "Use the recycling bin.", "exAr": "استخدم سلة إعادة التدوير."}, {"en": "disinfect", "ar": "يعقّم", "category": "Cleaning & Housekeeping", "hint": "Kill germs.", "exEn": "Disinfect the surface.", "exAr": "عقّم السطح."}, {"en": "disinfection", "ar": "تعقيم", "category": "Cleaning & Housekeeping", "hint": "The process of disinfecting.", "exEn": "Disinfection helps reduce germs.", "exAr": "التعقيم يقلل الجراثيم."}, {"en": "sanitize", "ar": "يطهر", "category": "Cleaning & Housekeeping", "hint": "Make hygienic.", "exEn": "Sanitize the table.", "exAr": "طهّر الطاولة."}, {"en": "sanitizer", "ar": "مطهر", "category": "Cleaning & Housekeeping", "hint": "Product for sanitizing.", "exEn": "Use hand sanitizer.", "exAr": "استخدم معقم اليدين."}, {"en": "hygiene", "ar": "نظافة شخصية", "category": "Cleaning & Housekeeping", "hint": "Clean habits.", "exEn": "Good hygiene is important.", "exAr": "النظافة الشخصية مهمة."}, {"en": "spill kit", "ar": "عدة الانسكاب", "category": "Cleaning & Housekeeping", "hint": "Tools to clean spills.", "exEn": "Use the spill kit for spills.", "exAr": "استخدم عدة الانسكاب للانسكابات."}];
+
+
+// PWA service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
+
+// ---------- Simple router ----------
+const viewHome = document.getElementById('viewHome');
+const viewQuiz = document.getElementById('viewQuiz');
+const viewReview = document.getElementById('viewReview');
+
+function showView(name) {
+  for (const v of [viewHome, viewQuiz, viewReview]) v.classList.remove('active');
+  if (name === 'home') viewHome.classList.add('active');
+  if (name === 'quiz') viewQuiz.classList.add('active');
+  if (name === 'review') viewReview.classList.add('active');
+}
+
+document.getElementById('btnGoQuiz').addEventListener('click', () => {
+  showView('quiz');
+  startQuizIfNeeded();
+});
+document.getElementById('btnGoReview').addEventListener('click', () => {
+  showView('review');
+  renderReview();
+});
+document.getElementById('btnBackHomeFromQuiz').addEventListener('click', () => showView('home'));
+document.getElementById('btnBackHomeFromReview').addEventListener('click', () => showView('home'));
+
+// ---------- Toast ----------
+const toast = document.getElementById('toast');
+let toastTimer = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.style.display = 'none';
+  }, 1800);
+}
+
+// ---------- TTS ----------
+function speak(text, lang) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (lang) u.lang = lang;
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+// ---------- Quiz state ----------
+const wordEnEl = document.getElementById('wordEn');
+const hintEl = document.getElementById('hintText');
+const choicesEl = document.getElementById('choices');
+const feedbackEl = document.getElementById('feedback');
+const exampleBox = document.getElementById('exampleBox');
+const exampleEnEl = document.getElementById('exampleEn');
+const exampleArEl = document.getElementById('exampleAr');
+const progressBar = document.getElementById('progressBar');
+const barGood = document.getElementById('barGood');
+const barBad = document.getElementById('barBad');
+const barSkip = document.getElementById('barSkip');
+
+const countCorrect = document.getElementById('countCorrect');
+const countWrong = document.getElementById('countWrong');
+const countSkipped = document.getElementById('countSkipped');
+const countStreak = document.getElementById('countStreak');
+
+const btnSpeakWord = document.getElementById('btnSpeakWord');
+const btnSpeakExample = document.getElementById('btnSpeakExample');
+const btnSkip = document.getElementById('btnSkip');
+const btnNext = document.getElementById('btnNext');
+
+let quizInitialized = false;
+let current = null;
+let currentChoices = [];
+let answered = false;
+
+let stats = {
+  correct: 0,
+  wrong: 0,
+  skipped: 0,
+  streak: 0
+};
+
+// spaced repetition-ish buckets
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem('vocabQuizStateV5') || '{}');
+    return s;
+  } catch {
+    return {};
+  }
+}
+function saveState(state) {
+  localStorage.setItem('vocabQuizStateV5', JSON.stringify(state));
+}
+
+let state = loadState(); // {en: {level, due}}
+
+function nowTs() { return Date.now(); }
+
+// schedule: correct pushes due further; wrong pulls sooner
+const intervals = [
+  30 * 1000,
+  2 * 60 * 1000,
+  10 * 60 * 1000,
+  60 * 60 * 1000,
+  6 * 60 * 60 * 1000
+];
+
+function getEntryKey(e) { return e.en.toLowerCase(); }
+
+function getDueItems() {
+  const t = nowTs();
+  const due = [];
+  for (const e of VOCAB) {
+    const k = getEntryKey(e);
+    const st = state[k];
+    if (!st || !st.due || st.due <= t) due.push(e);
+  }
+  if (due.length === 0) {
+    for (let i=0; i<Math.min(20, VOCAB.length); i++) due.push(VOCAB[Math.floor(Math.random()*VOCAB.length)]);
+  }
+  return due;
+}
+
+function pickQuestion() {
+  const due = getDueItems();
+  return due[Math.floor(Math.random() * due.length)];
+}
+
+function pickChoices(correctEntry, n=4) {
+  const correct = correctEntry.ar;
+  const pool = VOCAB.filter(v => v.ar !== correct);
+  const picks = new Set([correct]);
+  while (picks.size < n) {
+    const r = pool[Math.floor(Math.random()*pool.length)].ar;
+    picks.add(r);
+  }
+  const arr = Array.from(picks);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function setBars() {
+  const total = Math.max(1, stats.correct + stats.wrong + stats.skipped);
+  progressBar.style.width = Math.min(100, (total / 40) * 100) + '%';
+  barGood.style.width = (stats.correct / total * 100) + '%';
+  barBad.style.width = (stats.wrong / total * 100) + '%';
+  barSkip.style.width = (stats.skipped / total * 100) + '%';
+
+  countCorrect.textContent = `✅ Correct: ${stats.correct}`;
+  countWrong.textContent = `❌ Wrong: ${stats.wrong}`;
+  countSkipped.textContent = `⏭️ Skipped: ${stats.skipped}`;
+  countStreak.textContent = `🔥 Streak: ${stats.streak}`;
+}
+
+function encouragementIfNeeded() {
+  if (stats.streak === 3) showToast('👍 ممتاز! أنت تعمل بشكل جيد! 🇸🇦');
+  if (stats.streak === 5) showToast('🔥 رائع جدًا! استمر! 💪✨');
+  if (stats.streak === 10) showToast('🏆 مذهل! أنت تتقدم بسرعة! 🚀');
+}
+
+function renderQuestion() {
+  current = pickQuestion();
+  currentChoices = pickChoices(current, 4);
+  answered = false;
+
+  wordEnEl.textContent = current.en;
+  hintEl.textContent = `${current.category} • ${current.hint}`;
+  feedbackEl.textContent = '';
+  feedbackEl.className = 'feedback';
+  exampleBox.style.display = 'none';
+
+  choicesEl.innerHTML = '';
+  currentChoices.forEach(choice => {
+    const b = document.createElement('button');
+    b.innerHTML = `<div style="font-weight:800; direction:rtl; text-align:right;">${choice}</div>`;
+    b.addEventListener('click', () => choose(choice));
+    choicesEl.appendChild(b);
+  });
+
+  setBars();
+}
+
+function updateSR(correct) {
+  const k = getEntryKey(current);
+  const st = state[k] || { level: 0, due: 0 };
+  if (correct) {
+    st.level = Math.min(4, (st.level ?? 0) + 1);
+    const delay = intervals[st.level] || intervals[intervals.length-1];
+    st.due = nowTs() + delay;
+  } else {
+    st.level = Math.max(0, (st.level ?? 0) - 1);
+    st.due = nowTs() + 20 * 1000;
+  }
+  state[k] = st;
+  saveState(state);
+}
+
+function choose(choice) {
+  if (answered) return;
+  answered = true;
+
+  const correct = (choice === current.ar);
+  if (correct) {
+    stats.correct += 1;
+    stats.streak += 1;
+    feedbackEl.textContent = 'Correct ✅';
+    feedbackEl.classList.add('ok');
+
+    exampleEnEl.textContent = current.exEn;
+    exampleArEl.textContent = current.exAr;
+    exampleBox.style.display = 'block';
+
+    encouragementIfNeeded();
+  } else {
+    stats.wrong += 1;
+    stats.streak = 0;
+    feedbackEl.textContent = `Wrong ❌  • Correct: ${current.ar}`;
+    feedbackEl.classList.add('no');
+  }
+
+  updateSR(correct);
+  setBars();
+}
+
+btnSkip.addEventListener('click', () => {
+  if (answered) return;
+  stats.skipped += 1;
+  stats.streak = 0;
+  feedbackEl.textContent = `Skipped ⏭️  • Answer: ${current.ar}`;
+  feedbackEl.className = 'feedback';
+  updateSR(false);
+  setBars();
+});
+
+btnNext.addEventListener('click', () => {
+  renderQuestion();
+});
+
+btnSpeakWord.addEventListener('click', () => {
+  speak(current?.en || '', 'en-US');
+});
+
+btnSpeakExample.addEventListener('click', () => {
+  speak(current?.exEn || '', 'en-US');
+});
+
+function startQuizIfNeeded() {
+  if (quizInitialized) return;
+  quizInitialized = true;
+  renderQuestion();
+}
+
+// ---------- Review ----------
+const reviewContainer = document.getElementById('reviewContainer');
+const reviewSearch = document.getElementById('reviewSearch');
+const reviewCountPill = document.getElementById('reviewCountPill');
+
+function groupByCategory(items) {
+  const map = new Map();
+  for (const it of items) {
+    const cat = it.category;
+    if (!map.has(cat)) map.set(cat, []);
+    map.get(cat).push(it);
+  }
+  const order = [
+    'Main Job',
+    'Chemical Safety & SDS',
+    'PPE & Respiratory',
+    'Slips/Trips/Falls',
+    'Lifting & Equipment',
+    'Cleaning & Housekeeping',
+    'Inventory & Dates',
+    'Asset Protection',
+    'Emergency Awareness',
+    'Conduct & Compliance'
+  ];
+  const result = [];
+  for (const c of order) {
+    if (map.has(c)) result.push([c, map.get(c)]);
+  }
+  for (const [c, arr] of map.entries()) {
+    if (!order.includes(c)) result.push([c, arr]);
+  }
+  return result;
+}
+
+function escapeHtml(s) {
+  return (s ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;');
+}
+
+function renderReview() {
+  const q = (reviewSearch.value || '').trim().toLowerCase();
+  const filtered = VOCAB.filter(v => {
+    if (!q) return true;
+    return v.en.toLowerCase().includes(q) || v.ar.toLowerCase().includes(q);
+  });
+  reviewCountPill.textContent = `Showing ${filtered.length}`;
+
+  const groups = groupByCategory(filtered);
+  reviewContainer.innerHTML = '';
+  for (const [cat, items] of groups) {
+    items.sort((a,b) => a.en.localeCompare(b.en));
+    const rows = items.map(it => `
+      <tr>
+        <td class="en">${escapeHtml(it.en)}</td>
+        <td class="ar">${escapeHtml(it.ar)}</td>
+      </tr>
+    `).join('');
+
+    const section = document.createElement('div');
+    section.className = 'cat';
+    section.innerHTML = `
+      <div class="catTitle">${escapeHtml(cat)} <span class="small">(${items.length})</span></div>
+      <table>
+        <thead>
+          <tr><th style="width:40%;">English</th><th>Arabic</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+    reviewContainer.appendChild(section);
+  }
+}
+
+reviewSearch.addEventListener('input', () => {
+  renderReview();
+});
+</script>
+</body>
+</html>
