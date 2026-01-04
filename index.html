@@ -612,7 +612,12 @@ function renderReview() {
     items.sort((a,b) => a.en.localeCompare(b.en));
     const rows = items.map(it => `
       <tr>
-        <td class="en">${escapeHtml(it.en)}</td>
+        <td class="en">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span>${escapeHtml(it.en)}</span>
+            <button class="speak reviewSpeak" type="button" title="Speak" data-en="${escapeHtml(it.en)}">🔊</button>
+          </div>
+        </td>
         <td class="ar">${escapeHtml(it.ar)}</td>
       </tr>
     `).join('');
@@ -630,6 +635,14 @@ function renderReview() {
     `;
     reviewContainer.appendChild(section);
   }
+
+  // Bind speak buttons inside Review
+  reviewContainer.querySelectorAll('.reviewSpeak').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const w = btn.getAttribute('data-en') || '';
+      speak(w, 'en-US');
+    });
+  });
 }
 
 reviewSearch.addEventListener('input', () => {
